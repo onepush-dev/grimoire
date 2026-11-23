@@ -7,14 +7,36 @@
 }
 
 :{$PROXY_PORT} {
+	# Railway health probe (returns only status/version).
 	@health path /health
 	handle @health {
 		reverse_proxy 127.0.0.1:3210
 	}
+
+	# Routes that Grimoire itself protects with managed integration bearer tokens
+	# (MCP, capture, browser extension). The daemon rejects any missing/invalid token.
+	@integration {
+		path /mcp /mcp/* /capture /integrations/browser/v1/*
+		header Authorization "Bearer *"
+	}
+	@integration_preflight {
+		path /mcp /mcp/* /capture /integrations/browser/v1/*
+		method OPTIONS
+	}
+	handle @integration {
+		reverse_proxy 127.0.0.1:3210
+	}
+	handle @integration_preflight {
+		reverse_proxy 127.0.0.1:3210
+	}
+
+	# Everything else (web app + REST API) requires the basic-auth login.
 	handle {
 		basic_auth {
 			{$GRIMOIRE_USERNAME} {$GRIMOIRE_PASSWORD_HASH}
 		}
-		reverse_proxy 127.0.0.1:3210
+		reverse_proxy 127.0.0.1:3210 {
+			header_up -Authorization
+		}
 	}
 }
