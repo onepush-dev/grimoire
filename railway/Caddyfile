@@ -1,0 +1,20 @@
+{
+	admin off
+	auto_https off
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+:{$PROXY_PORT} {
+	@health path /health
+	handle @health {
+		reverse_proxy 127.0.0.1:3210
+	}
+	handle {
+		basic_auth {
+			{$GRIMOIRE_USERNAME} {$GRIMOIRE_PASSWORD_HASH}
+		}
+		reverse_proxy 127.0.0.1:3210
+	}
+}
