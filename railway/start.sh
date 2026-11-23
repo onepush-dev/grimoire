@@ -7,9 +7,9 @@ GRIMOIRE_PASSWORD_HASH=$(caddy hash-password --plaintext "$GRIMOIRE_PASSWORD")
 export GRIMOIRE_PASSWORD_HASH
 unset GRIMOIRE_PASSWORD
 cd /app
-HOST=127.0.0.1 bun run daemon:start &
+HOST=127.0.0.1 PORT=3210 bun run daemon:start &
 APP=$!
-caddy run --config /etc/railway/Caddyfile --adapter caddyfile &
+PORT= caddy run --config /etc/railway/Caddyfile --adapter caddyfile &
 PROXY=$!
 trap 'kill $APP $PROXY 2>/dev/null' TERM INT
 # exit (so Railway restarts the container) as soon as either process stops
